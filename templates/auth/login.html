@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome!</title>
+    <link rel="icon" href="">
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="./../assets/main.css">
+</head>
+<body>
+    <style>
+    </style>
+
+    <script type="module">
+        // import MyComponent from './my-component.js'
+        // import Loader from '@/components/Loader.vue';
+        import Menu from './../../app/Menu.vue';
+        import AuthManager from './../../app/AuthManager.js';
+        import config from './../../app/config.js';
+        import { createApp, ref } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+        const component = {
+            name: 'ListaDias',
+            components: {
+                Menu
+                // Loader,
+            },
+            data: () => {
+                return {
+                busy: false,
+                email: '',
+                password: '',
+                }
+            },
+            methods: {
+                login () {
+                    this.busy = true;
+                    let url = config.serverUrl + '/auth/login';
+                    let body = {
+                        'email': this.email,
+                        'password': this.password
+                    };
+                    let data = {
+                        method: 'POST',
+                        body: JSON.stringify(body)
+                    };
+                    fetch(url,data)
+                    .then(async response => {
+                    if(!response.ok){
+                        throw 'Error in loggin in';
+                    }
+                    data = await response.json();
+                    console.log('[LOG]',response);
+                    console.log('[LOG]',data);
+                    this.dias = data
+                    this.busy = false;
+                    AuthManager.storeToken(data.token);
+                    AuthManager.storeRefreshToken(data.refreshToken);
+                    this.$emit('redirectAfterLogin', [])
+                    // notify.notify('carregado!', "success");
+                    }).catch(error => {
+                        console.log('[LOG]',error);
+                        this.busy = false;
+                    });
+                },
+            },
+        }
+        createApp(component).mount('#app')
+    </script>
+
+    <div id="app">
+        
+        <nav class="shadow-1">
+            <a class="btn" href="/">Login</a>
+            <a class="btn" href="/app/register">Register</a>
+            <a class="btn" href="/app/invitations">invitations</a>
+            <a class="btn" href="/app/listaDias">Lista Dias</a>
+            <button @click="exportData()">Export Data</button>
+            <button @click="openImportDataModal()">Import Data</button>
+        </nav>
+
+        <div class="container">
+    
+          <section>
+            <h1>Login</h1>
+            <label for="email">Email:</label>
+            <input name="email" type="email" placeholder="email" v-model="email">
+    
+            <label for="password">Senha:</label>
+            <input name="password" type="password" placeholder="senha" v-model="password">
+    
+            <button @click="login()">Entrar</button>
+          </section>
+        </div>
+    
+        <!--<Loader :busy="busy"></Loader>-->
+    </div>
+</body>
+
+</html>

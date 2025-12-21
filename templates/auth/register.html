@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome!</title>
+    <link rel="icon" href="">
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="./../assets/main.css">
+</head>
+<body>
+    <style>
+    </style>
+
+    <script type="module">
+        // import MyComponent from './my-component.js'
+        // import Loader from '@/components/Loader.vue';
+        // import Notifier from '@/components/Notifier.vue';
+        import Request from './../../app/request.js';
+        import AuthManager from './../../app/AuthManager.js';
+        import config from './../../app/config.js';
+        import { createApp, ref } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+        const component = {
+            name: 'ListaDias',
+            components: {
+                // Loader,
+                // Notifier
+            },
+            data: () => {
+                return {
+                busy: false,
+                email: '',
+                password: '',
+                invitationToken: '',
+                repeatPassword: '',
+                showNotify: false,
+                notifyMessage: '',
+                }
+            },
+            methods: {
+                notify(message, type = 'success'){
+                    this.showNotify = true;
+                    this.notifyMessage = message;
+                },
+                register () {
+                    this.busy = true;
+                    let url = config.serverUrl + '/auth/register';
+                    let body = {
+                        'email': this.email,
+                        'password': this.password,
+                        'invitationToken': this.invitationToken,
+                        'repeatPassword': this.repeatPassword
+                    };
+                    let data = {
+                        method: 'POST',
+                        body: JSON.stringify(body),
+                    };
+                    let requestData = {
+                        'url': url,
+                        method: 'POST',
+                        data: body,
+                        notAuthenticated: true
+                    };
+                    Request.fetch(requestData)
+                    .then(([response, data]) => {
+                        console.log('data',data);
+                        this.notify('Registrado! Faça o login.');
+                        this.busy = false;
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                        this.busy = false;
+                        this.notify('Ocorreu um erro.' + error);
+                    });
+                },
+            },
+            watch: {
+            },
+            created () {
+            },
+            destroyed() {
+            }
+            }
+        createApp(component).mount('#app')
+    </script>
+
+    <div id="app">
+        <div class="container">
+    
+          <section>
+            <h1>Register</h1>
+    
+            <label for="invitationToken">Palavra Passe:</label>
+            <input name="invitationToken" type="text" placeholder="invitationToken" v-model="invitationToken">
+    
+            <label for="email">Email:</label>
+            <input name="email" type="email" placeholder="email" v-model="email">
+    
+            <label for="password">Senha:</label>
+            <input name="password" type="password" placeholder="senha" v-model="password">
+    
+            <label for="repeatPassword">Repita a senha:</label>
+            <input name="repeatPassword" type="password" placeholder="repeatPassword" v-model="repeatPassword">
+    
+            <button @click="register()">Criar conta</button>
+          </section>
+        </div>
+    
+        <!-- <Loader :busy="busy"></Loader> -->
+        <!-- <Notifier v-model:showNotify="showNotify" :message="notifyMessage"></Notifier> -->
+    </div>
+</body>
+
+</html>

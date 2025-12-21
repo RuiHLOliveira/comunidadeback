@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello DiasController!{% endblock %}
+
+{% block body %}
+<style>
+</style>
+
+<script>
+import { createApp, ref } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+createApp({
+    setup() {
+        const message = ref('Hello Vue!')
+        return {
+            message
+        }
+    }
+}).mount('#app')
+</script>
+
+<div>
+    <div id="app">{{ message }}</div>
+
+    <div class="container">
+
+    <section>
+        <h1>Login</h1>
+
+        <input id="nomeInput" type="text" />
+        <span id="show-nomeInput"></span>
+
+        <label for="email">Email:</label>
+        <input name="email" type="email" placeholder="email">
+
+        <label for="password">Senha:</label>
+        <input name="password" type="password" placeholder="senha">
+
+        <button onclick="login()">Entrar</button>
+    </section>
+    </div>
+    {# <Loader :busy="busy"></Loader> #}
+</div>
+
+{% endblock %}
