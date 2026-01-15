@@ -151,4 +151,44 @@ class Modulo extends JsonSerializableEntity
 
         return $this;
     }
+
+    /**
+     * Get the value of curso
+     */ 
+    public function getCurso()
+    {
+        return $this->curso;
+    }
+
+    /**
+     * Set the value of curso
+     *
+     * @return  self
+     */ 
+    public function setCurso($curso)
+    {
+        $this->curso = $curso;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of aulas
+     */ 
+    public function getAulas()
+    {
+        return $this->aulas;
+    }
+
+    /**
+     * Set the value of aulas
+     *
+     * @return  self
+     */ 
+    public function setAulas($aulas)
+    {
+        $this->aulas = $aulas;
+
+        return $this;
+    }
 }
