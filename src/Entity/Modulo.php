@@ -19,6 +19,7 @@ class Modulo extends JsonSerializableEntity
         $array = [
             'id' => $this->getId(),
             'nome' => $this->getNome(),
+            'curso' => $this->getCurso(),
             'createdAt' => $this->getCreatedAt(),
             'updatedAt' => $this->getUpdatedAt(),
             'deletedAt' => $this->getDeletedAt(),

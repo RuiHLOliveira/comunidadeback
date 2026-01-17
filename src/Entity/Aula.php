@@ -19,6 +19,8 @@ class Aula extends JsonSerializableEntity
         $array = [
             'id' => $this->getId(),
             'nome' => $this->getNome(),
+            'url' => $this->getUrl(),
+            'modulo' => $this->getModulo(),
             'createdAt' => $this->getCreatedAt(),
             'updatedAt' => $this->getUpdatedAt(),
             'deletedAt' => $this->getDeletedAt(),
