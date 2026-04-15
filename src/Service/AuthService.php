@@ -13,11 +13,80 @@ class AuthService
     
     private $doctrine;
     private $encoder;
+    private $mailer;
+    private $senderEmail;
+    private $cache;
 
-    public function __construct(ManagerRegistry $doctrine,  UserPasswordEncoderInterface $encoder)
+    public function __construct(ManagerRegistry $doctrine, UserPasswordEncoderInterface $encoder, \Symfony\Component\Mailer\MailerInterface $mailer, string $senderEmail, \Symfony\Contracts\Cache\CacheInterface $cache)
     {
         $this->doctrine = $doctrine;
         $this->encoder = $encoder;
+        $this->mailer = $mailer;
+        $this->senderEmail = $senderEmail;
+        $this->cache = $cache;
+    }
+
+    public function canRequestCode(string $ip): bool
+    {
+        $cacheKey = 'login_attempt_' . str_replace(['.', ':'], '_', $ip);
+        $attempts = $this->cache->get($cacheKey, function (\Symfony\Contracts\Cache\ItemInterface $item) {
+            $item->expiresAfter(3600); // 1 hora
+            return 0;
+        });
+
+        return $attempts < 3;
+    }
+
+    public function logAttempt(string $ip): void
+    {
+        $cacheKey = 'login_attempt_' . str_replace(['.', ':'], '_', $ip);
+        $attempts = $this->cache->get($cacheKey, function (\Symfony\Contracts\Cache\ItemInterface $item) {
+            $item->expiresAfter(3600);
+            return 0;
+        });
+        
+        $this->cache->delete($cacheKey);
+        $this->cache->get($cacheKey, function (\Symfony\Contracts\Cache\ItemInterface $item) use ($attempts) {
+            $item->expiresAfter(3600);
+            return $attempts + 1;
+        });
+    }
+
+    public function generateLoginCode(string $email)
+    {
+        $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        
+        $cacheKey = 'login_code_' . str_replace(['.','@'], '_', $email);
+        $this->cache->get($cacheKey, function (\Symfony\Contracts\Cache\ItemInterface $item) use ($code) {
+            $item->expiresAfter(300); // 5 minutos
+            return $code;
+        });
+
+        $emailObj = (new \Symfony\Component\Mime\Email())
+            ->from($this->senderEmail)
+            ->to($email)
+            ->subject('Seu código de acesso')
+            ->text("Seu código de acesso é: $code. Ele expira em 5 minutos.");
+        
+        $this->mailer->send($emailObj);
+        
+        return $code;
+    }
+
+    public function verifyCode(string $email, string $code): bool
+    {
+        $cacheKey = 'login_code_' . str_replace(['.','@'], '_', $email);
+        $savedCode = $this->cache->get($cacheKey, function (\Symfony\Contracts\Cache\ItemInterface $item) {
+            $item->expiresAfter(0); // Garante que não retorne nada se não existir
+            return null;
+        });
+
+        if ($savedCode && $savedCode === $code) {
+            $this->cache->delete($cacheKey); // Uso único
+            return true;
+        }
+
+        return false;
     }
 
     public function registerUser(User $user, string $invitationTokenString) {

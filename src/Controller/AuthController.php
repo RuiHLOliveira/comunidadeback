@@ -29,6 +29,32 @@ class AuthController extends AbstractController
     }
 
     /**
+     * @Route("/auth/request-code", name="request_code", methods={"POST"})
+     */
+    public function requestCode(Request $request, UserRepository $userRepository)
+    {
+        try {
+            $ip = $request->getClientIp();
+            if (!$this->authService->canRequestCode($ip)) {
+                return new JsonResponse(['message' => 'Muitas tentativas. Tente novamente mais tarde.'], 429);
+            }
+
+            $data = json_decode($request->getContent());
+            if (!isset($data->email)) throw new \Exception("E-mail não enviado.");
+            
+            $user = $userRepository->findOneBy(['email' => $data->email]);
+            if (!$user) return new JsonResponse(['message' => 'Usuário não encontrado.'], 404);
+
+            $this->authService->generateLoginCode($data->email);
+            $this->authService->logAttempt($ip);
+
+            return new JsonResponse(['message' => 'Código enviado com sucesso.']);
+        } catch (\Throwable $th) {
+            return new JsonResponse(['message' => $th->getMessage()], 500);
+        }
+    }
+
+    /**
      * @Route("/auth/ping", name="auth_ping", methods={"GET"})
      */
     public function ping(Request $request)
@@ -93,7 +119,14 @@ class AuthController extends AbstractController
             throw new BadRequestHttpException("E-mail não enviado.");
         }
         if( !property_exists($requestData, 'password') || $requestData->password == ''){
-            throw new BadRequestHttpException("Senha não enviada.");
+            $requestData->password = '';
+        }
+        // caso tenha codigo, deixa passar
+        if( !property_exists($requestData, 'code') || $requestData->code == ''){
+            // caso não tenha codigo, valida a senha
+            if( !property_exists($requestData, 'password') || $requestData->password == ''){
+                throw new BadRequestHttpException("Senha não enviada.");
+            }
         }
     }
 
@@ -105,7 +138,7 @@ class AuthController extends AbstractController
         try {
             $requestData = json_decode($request->getContent());
             $this->validateLoginData($requestData);
-            $password = $requestData->password;
+            $password = $requestData->password ?? null;
             $email = $requestData->email;
 
             //busca o usuario pelo email
@@ -116,9 +149,14 @@ class AuthController extends AbstractController
                 return new JsonResponse(['message' => 'E-mail não existe.'], Response::HTTP_BAD_REQUEST);
             }
             
-            //se não achar acusa erro
-            if (!$encoder->isPasswordValid($user, $password)) {
-                return new JsonResponse(['message' => 'Senha incorreta.'], Response::HTTP_BAD_REQUEST);
+            if (isset($requestData->code)) {
+                if (!$this->authService->verifyCode($requestData->email, $requestData->code)) {
+                    return new JsonResponse(['message' => 'Código inválido ou expirado.'], 400);
+                }
+            } else {
+                if (!$encoder->isPasswordValid($user, $password)) {
+                    return new JsonResponse(['message' => 'Senha incorreta.'], Response::HTTP_BAD_REQUEST);
+                }
             }
 
             $tokens = $this->makeNewTokens($user);
@@ -126,7 +164,8 @@ class AuthController extends AbstractController
             return new JsonResponse([
                 'message' => 'success!',
                 'token' => $tokens['token'],
-                'refreshToken' => $tokens['refreshToken']
+                'refreshToken' => $tokens['refreshToken'],
+                'userData' => $tokens['userData']
             ]);
             
         } catch (\Throwable $th) {
@@ -150,7 +189,10 @@ class AuthController extends AbstractController
 
         return [
             'token' => sprintf('Bearer %s', $jwt),
-            'refreshToken' => sprintf('Bearer %s', $refreshJwt)
+            'refreshToken' => sprintf('Bearer %s', $refreshJwt),
+            "userData" => [
+                'role' => $user->getEmail() == 'ruigx@hotmail.com' ? 'admin' : 'mentorado'
+            ]
         ];
     }
 
@@ -180,7 +222,8 @@ class AuthController extends AbstractController
             return new JsonResponse([
                 'message' => 'success!',
                 'token' => $tokens['token'],
-                'refreshToken' => $tokens['refreshToken']
+                'refreshToken' => $tokens['refreshToken'],
+                'userData' => $tokens['userData']
             ]);
 
         } catch (\Firebase\JWT\ExpiredException $e) {
