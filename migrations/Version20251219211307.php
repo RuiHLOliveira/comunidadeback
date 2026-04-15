@@ -20,7 +20,7 @@ final class Version20251219211307 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('DROP SEQUENCE configuracao_id_seq CASCADE');
+        $this->addSql('DROP SEQUENCE IF EXISTS configuracao_id_seq CASCADE');
         $this->addSql('CREATE TABLE aula (id SERIAL NOT NULL, usuario_id INT NOT NULL, modulo_id INT NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, deleted_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, nome VARCHAR(255) NOT NULL, url VARCHAR(255) NOT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE INDEX IDX_31990A4DB38439E ON aula (usuario_id)');
         $this->addSql('CREATE INDEX IDX_31990A4C07F55F5 ON aula (modulo_id)');

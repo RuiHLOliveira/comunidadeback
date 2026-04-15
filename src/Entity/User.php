@@ -28,7 +28,7 @@ class User extends JsonSerializableEntity implements UserInterface, PasswordAuth
 
     /**
      * @ORM\Id
-     * @ORM\GeneratedValue
+     * @ORM\GeneratedValue(strategy="IDENTITY")
      * @ORM\Column(type="integer")
      */
     protected $id;
@@ -39,12 +39,12 @@ class User extends JsonSerializableEntity implements UserInterface, PasswordAuth
     private $email;
     
     /**
-     * @ORM\Column(type="string", length=255, unique=true)
+     * @ORM\Column(type="string", length=255, unique=true, nullable=true)
      */
     private $nome;
     
     /**
-     * @ORM\Column(type="string", length=255, unique=true)
+     * @ORM\Column(type="string", length=255, unique=true, nullable=true)
      */
     private $apelido;
 

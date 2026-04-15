@@ -18,11 +18,21 @@ class PostsService
     }
 
     /**
+     * @param array $orderBy
+     * @return array
+     */
+    public function findAll(array $filter = [], array $orderBy = []): array
+    {
+        return $this->doctrine->getRepository(Post::class)->findBy($filter, $orderBy);
+    }
+
+    
+    /**
      * @param User $usuario
      * @param array $orderBy
      * @return array
      */
-    public function findAll(User $usuario, array $filter = [], array $orderBy = []): array
+    public function findAllByUsuario(User $usuario, array $filter = [], array $orderBy = []): array
     {
         $filter['usuario'] = $usuario;
         return $this->doctrine->getRepository(Post::class)->findBy($filter, $orderBy);
@@ -41,15 +51,30 @@ class PostsService
     }
 
     /**
+     * @param array $filters
+     * @param array $orderBy
+     * @return array<Post>
+     */
+    public function listaPostsUseCase(array $filters = [], array $orderBy = []) : array
+    {
+        try {
+            $posts = $this->findAll($filters, $orderBy);
+            return $posts;
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
      * @param User $usuario
      * @param array $filters
      * @param array $orderBy
      * @return array<Post>
      */
-    public function listaPostsUseCase(User $usuario, array $filters = [], array $orderBy = []) : array
+    public function listaPostsByUsuarioUseCase(User $usuario, array $filters = [], array $orderBy = []) : array
     {
         try {
-            $posts = $this->findAll($usuario, $filters, $orderBy);
+            $posts = $this->findAllByUsuario($usuario, $filters, $orderBy);
             return $posts;
         } catch (\Exception $e) {
             throw $e;

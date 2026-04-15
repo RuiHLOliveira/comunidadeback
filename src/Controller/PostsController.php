@@ -54,7 +54,7 @@ class PostsController extends AbstractController
             //     $filters['prioridade'] = $value;
             // }
 
-            $posts = $this->postsService->listaPostsUseCase($usuario, $filters, $orderBy);
+            $posts = $this->postsService->listaPostsUseCase($filters, $orderBy);
 
             // $loadTarefas = $request->query->get('loadTarefas');
             // if(filter_var($loadTarefas, FILTER_VALIDATE_BOOLEAN)) {

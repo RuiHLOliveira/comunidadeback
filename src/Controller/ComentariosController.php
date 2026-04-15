@@ -71,7 +71,7 @@ class ComentariosController extends AbstractController
             $filters = $this->getFilters($request);
             $orderBy = $this->getOrderBy($request);
 
-            $entityList = $this->comentariosService->listaComentariosUseCase($usuario, $filters, $orderBy);
+            $entityList = $this->comentariosService->listaComentariosUseCase($filters, $orderBy);
 
             $properties = $this->getProperties($request);
 

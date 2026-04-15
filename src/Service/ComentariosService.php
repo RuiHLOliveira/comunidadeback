@@ -26,38 +26,30 @@ class ComentariosService
     }
 
     /**
-     * @param User $usuario
      * @param array $orderBy
      * @return array
      */
-    public function findAll(User $usuario, array $filters = [], array $orderBy = null): array
+    public function findAll(array $filters = [], array $orderBy = null): array
     {
-        $filters['usuario'] = $usuario;
         return $this->doctrine->getRepository(Comentario::class)->findBy($filters, $orderBy);
     }
 
     /**
      * @param string $idComentario
-     * @param User $usuario
      */
-    public function find(string $idComentario, User $usuario): Comentario
+    public function find(string $idComentario): ?Comentario
     {
-        $comentario = $this->doctrine->getRepository(Comentario::class)->findOneBy([
-            'id' => $idComentario,
-            'usuario' => $usuario
-        ]);
-        return $comentario;
+        return $this->doctrine->getRepository(Comentario::class)->find($idComentario);
     }
 
     /**
-     * @param User $usuario
      * @param array $orderBy
      * @return array<Comentario>
      */
-    public function listaComentariosUseCase(User $usuario, array $filters = [], array $orderBy = null): array
+    public function listaComentariosUseCase(array $filters = [], array $orderBy = null): array
     {
         try {
-            $comentarios = $this->findAll($usuario, $filters, $orderBy);
+            $comentarios = $this->findAll($filters, $orderBy);
             return $comentarios;
         } catch (\Exception $e) {
             throw $e;
