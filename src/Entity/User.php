@@ -22,6 +22,7 @@ class User extends JsonSerializableEntity implements UserInterface, PasswordAuth
         $array = parent::jsonSerialize();
         $array['id'] = $this->getId();
         $array['email'] = $this->getEmail();
+        $array['informacoes'] = $this->getInformacoes();
         return $array;
     }
 
@@ -57,6 +58,11 @@ class User extends JsonSerializableEntity implements UserInterface, PasswordAuth
      * @ORM\Column(type="string")
      */
     private $password;
+
+    /**
+     * @ORM\Column(type="json", nullable=true)
+     */
+    private $informacoes = [];
 
     /**
      * @ORM\OneToMany(targetEntity=Comentario::class, mappedBy="usuario")
@@ -262,6 +268,18 @@ class User extends JsonSerializableEntity implements UserInterface, PasswordAuth
     public function setApelido($apelido)
     {
         $this->apelido = $apelido;
+
+        return $this;
+    }
+
+    public function getInformacoes(): ?array
+    {
+        return $this->informacoes;
+    }
+
+    public function setInformacoes(?array $informacoes): self
+    {
+        $this->informacoes = $informacoes;
 
         return $this;
     }
