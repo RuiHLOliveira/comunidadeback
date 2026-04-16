@@ -5,16 +5,16 @@ namespace App\Entity;
 use JsonSerializable;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\CursoRepository;
-use App\Entity\JsonSerializableEntity;
+use App\Entity\SerializableEntity;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass=CursoRepository::class)
  */
-class Curso extends JsonSerializableEntity
+class Curso extends SerializableEntity
 {
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = [
             'id' => $this->getId(),

@@ -12,10 +12,10 @@ use App\Repository\ComentarioRepository;
 /**
  * @ORM\Entity(repositoryClass=ComentarioRepository::class)
  */
-class Comentario extends JsonSerializableEntity
+class Comentario extends SerializableEntity
 {
 
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = parent::jsonSerialize();
         $array['conteudo'] = $this->getConteudo();

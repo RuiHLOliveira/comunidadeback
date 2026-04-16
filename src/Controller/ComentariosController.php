@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use Exception;
 use DateTimeImmutable;
+use Psr\Log\LoggerInterface;
 use App\Entity\Comentario;
 use PhpParser\JsonDecoder;
 use App\Service\PostsService;
@@ -22,11 +23,13 @@ class ComentariosController extends AbstractController
     
     private $comentariosService;
     private $postsService;
+    private $logger;
 
-    public function __construct(ComentariosService $comentariosService, PostsService $postsService)
+    public function __construct(ComentariosService $comentariosService, PostsService $postsService, LoggerInterface $logger)
     {
         $this->comentariosService = $comentariosService;
         $this->postsService = $postsService;
+        $this->logger = $logger;
     }
 
     private function getFilters(Request $request)
@@ -52,7 +55,7 @@ class ComentariosController extends AbstractController
 
     private function getProperties(Request $request)
     {
-        $properties = explode(',',$request->query->get('properties'));
+        $properties = explode(',',$request->query->get('properties') ?? '');
         foreach($properties as $key => $value) {
             $properties[$value] = true;
             unset($properties[$key]);
@@ -70,7 +73,7 @@ class ComentariosController extends AbstractController
 
             $filters = $this->getFilters($request);
             $orderBy = $this->getOrderBy($request);
-
+            
             $entityList = $this->comentariosService->listaComentariosUseCase($filters, $orderBy);
 
             $properties = $this->getProperties($request);
@@ -84,6 +87,10 @@ class ComentariosController extends AbstractController
 
             return new JsonResponse($entityList);
         } catch (\Exception $e) {
+            $this->logger->error('[ComentariosController] Erro ao listar comentários', [
+                'user_id' => $this->getUser() ? $this->getUser()->getId() : 'anonymous',
+                'exception' => $e
+            ]);
             return new JsonResponse(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -105,7 +112,17 @@ class ComentariosController extends AbstractController
         try {
             $usuario = $this->getUser();
             $requestData = json_decode($request->getContent());
-            $this->validateCreateComentarioData($requestData);
+            
+            try {
+                $this->validateCreateComentarioData($requestData);
+            } catch (BadRequestHttpException $e) {
+                $this->logger->warning('[ComentariosController] Falha na validação de criação de comentário', [
+                    'user_id' => $usuario->getId(),
+                    'data' => $requestData,
+                    'error' => $e->getMessage()
+                ]);
+                throw $e;
+            }
 
             $post = $this->validatePostExiste($requestData->post, $usuario);
 
@@ -119,8 +136,15 @@ class ComentariosController extends AbstractController
             $comentario = $this->comentariosService->factoryComentario($requestData->conteudo, $comentarioPai, $post, $usuario);
             $comentario = $this->comentariosService->createNewComentario($comentario);
             return new JsonResponse($comentario, Response::HTTP_CREATED);
-        } catch (\Exception $e) {
-            return new JsonResponse(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        } catch (\Throwable $e) {
+            $status = $e instanceof BadRequestHttpException || $e instanceof NotFoundHttpException ? Response::HTTP_BAD_REQUEST : Response::HTTP_INTERNAL_SERVER_ERROR;
+            if ($status >= 500) {
+                $this->logger->error('[ComentariosController] Erro inesperado ao criar comentário', [
+                    'user_id' => $usuario->getId(),
+                    'exception' => $e
+                ]);
+            }
+            return new JsonResponse(['message' => $e->getMessage()], $status);
         }
     }
 
@@ -128,9 +152,6 @@ class ComentariosController extends AbstractController
         if( !property_exists($requestData, 'conteudo') || $requestData->conteudo == ''){
             throw new BadRequestHttpException("Conteúdo não enviado.");
         }
-        // if( !property_exists($requestData, 'hora') || $requestData->hora == ''){
-        //     throw new BadRequestHttpException("Hora não enviada.");
-        // }
     }
 
     /**
@@ -141,7 +162,17 @@ class ComentariosController extends AbstractController
         try {
             $usuario = $this->getUser();
             $requestData = json_decode($request->getContent());
-            $this->validateUpdateComentarioData($requestData);
+            
+            try {
+                $this->validateUpdateComentarioData($requestData);
+            } catch (BadRequestHttpException $e) {
+                $this->logger->warning('[ComentariosController] Falha na validação de atualização de comentário', [
+                    'comentario_id' => $id,
+                    'user_id' => $usuario->getId(),
+                    'error' => $e->getMessage()
+                ]);
+                throw $e;
+            }
 
             $comentario = $this->validateComentarioExiste($id, $usuario);
 
@@ -151,7 +182,16 @@ class ComentariosController extends AbstractController
             return new JsonResponse();
             
         } catch (\Exception $e) {
-            return new JsonResponse(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+            $status = $e instanceof BadRequestHttpException || $e instanceof NotFoundHttpException ? Response::HTTP_BAD_REQUEST : Response::HTTP_INTERNAL_SERVER_ERROR;
+            
+            if ($status >= 500) {
+                $this->logger->error('[ComentariosController] Erro inesperado ao atualizar comentário', [
+                    'comentario_id' => $id,
+                    'user_id' => $usuario->getId(),
+                    'exception' => $e
+                ]);
+            }
+            return new JsonResponse(['message' => $e->getMessage()], $status);
         }
     }
 
@@ -163,8 +203,6 @@ class ComentariosController extends AbstractController
     {
         try {
             $usuario = $this->getUser();
-            $requestData = json_decode($request->getContent());
-
             $comentario = $this->validateComentarioExiste($id, $usuario);
 
             $this->comentariosService->deleteComentarioUseCase($comentario, $usuario);
@@ -172,7 +210,16 @@ class ComentariosController extends AbstractController
             return new JsonResponse();
             
         } catch (\Exception $e) {
-            return new JsonResponse(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+            $status = $e instanceof NotFoundHttpException ? Response::HTTP_NOT_FOUND : Response::HTTP_BAD_REQUEST;
+            
+            if ($status >= 500) {
+                $this->logger->error('[ComentariosController] Erro inesperado ao deletar comentário', [
+                    'comentario_id' => $id,
+                    'user_id' => $usuario->getId(),
+                    'exception' => $e
+                ]);
+            }
+            return new JsonResponse(['message' => $e->getMessage()], $status);
         }
     }
 
@@ -180,6 +227,10 @@ class ComentariosController extends AbstractController
     {
         $comentario = $this->comentariosService->find($id, $usuario);
         if($comentario == null) {
+            $this->logger->warning('[ComentariosController] Comentário não encontrado', [
+                'comentario_id' => $id,
+                'user_id' => $usuario->getId()
+            ]);
             throw new NotFoundHttpException('Comentario não encontrado.');
         }
         return $comentario;
@@ -187,8 +238,12 @@ class ComentariosController extends AbstractController
     
     private function validatePostExiste($id, $usuario)
     {
-        $post = $this->postsService->findOne($usuario, $id);
+        $post = $this->postsService->findOneBy($id, []);
         if($post == null) {
+            $this->logger->warning('[ComentariosController] Post não encontrado ao criar comentário', [
+                'post_id' => $id,
+                'user_id' => $usuario->getId()
+            ]);
             throw new NotFoundHttpException('Post não encontrado.');
         }
         return $post;

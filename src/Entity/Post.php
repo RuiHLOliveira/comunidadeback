@@ -4,16 +4,16 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\PostRepository;
-use App\Entity\JsonSerializableEntity;
+use App\Entity\SerializableEntity;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass=PostRepository::class)
  */
-class Post extends JsonSerializableEntity
+class Post extends SerializableEntity
 {
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = [
             'id' => $this->getId(),

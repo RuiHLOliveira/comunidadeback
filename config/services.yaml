@@ -5,6 +5,7 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     app.sender_email: '%env(SENDER)%'
+    app.GOOGLE_SCRIPT_URL: '%env(GOOGLE_SCRIPT_URL)%'
     jwt_secret: segredo987654321sProject
     refresh_jwt_secret: segredor9e8f7r6e5s4h321sProject
 
@@ -31,3 +32,4 @@ services:
     App\Service\AuthService:
         arguments:
             $senderEmail: '%app.sender_email%'
+            $googleScriptUrl: '%app.GOOGLE_SCRIPT_URL%'

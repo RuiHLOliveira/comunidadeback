@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use DateInterval;
 use DateTime;
 use LogicException;
+use Psr\Log\LoggerInterface;
 use App\Entity\Post;
 use App\Entity\User;
 use App\Entity\Comentario;
@@ -18,11 +19,13 @@ class ComentariosService
     
     private $doctrine;
     private $encoder;
+    private $logger;
 
-    public function __construct(ManagerRegistry $doctrine,  UserPasswordEncoderInterface $encoder)
+    public function __construct(ManagerRegistry $doctrine, UserPasswordEncoderInterface $encoder, LoggerInterface $logger)
     {
         $this->doctrine = $doctrine;
         $this->encoder = $encoder;
+        $this->logger = $logger;
     }
 
     /**
@@ -52,6 +55,10 @@ class ComentariosService
             $comentarios = $this->findAll($filters, $orderBy);
             return $comentarios;
         } catch (\Exception $e) {
+            $this->logger->error('[ComentariosService] Erro ao listar comentários', [
+                'exception' => $e,
+                'filters' => $filters
+            ]);
             throw $e;
         }
     }
@@ -69,9 +76,19 @@ class ComentariosService
             $entityManager->persist($comentario);
             $entityManager->flush();
             $entityManager->getConnection()->commit();
+
+            $this->logger->info('[ComentariosService] Comentário atualizado com sucesso', [
+                'comentario_id' => $comentario->getId(),
+                'user_id' => $comentario->getUsuario()->getId()
+            ]);
+
             return $comentario;
         } catch (\Throwable $th) {
             $entityManager->getConnection()->rollback();
+            $this->logger->error('[ComentariosService] Erro ao atualizar comentário', [
+                'comentario_id' => $comentario->getId(),
+                'exception' => $th
+            ]);
             throw $th;
         }
     }
@@ -79,14 +96,26 @@ class ComentariosService
     public function deleteComentarioUseCase(Comentario $comentario, User $usuario)
     {
         $entityManager = $this->doctrine->getManager();
+        $comentarioId = $comentario->getId();
         try {
             $entityManager->getConnection()->beginTransaction();
             $entityManager->remove($comentario);
             $entityManager->flush();
             $entityManager->getConnection()->commit();
+
+            $this->logger->info('[ComentariosService] Comentário deletado com sucesso', [
+                'comentario_id' => $comentarioId,
+                'user_id' => $usuario->getId()
+            ]);
+
             return $comentario;
         } catch (\Throwable $th) {
             $entityManager->getConnection()->rollback();
+            $this->logger->error('[ComentariosService] Erro ao deletar comentário', [
+                'comentario_id' => $comentarioId,
+                'user_id' => $usuario->getId(),
+                'exception' => $th
+            ]);
             throw $th;
         }
     }
@@ -119,9 +148,21 @@ class ComentariosService
             $entityManager->persist($comentario);
             $entityManager->flush();
             $entityManager->getConnection()->commit();
+
+            $this->logger->info('[ComentariosService] Novo comentário criado', [
+                'comentario_id' => $comentario->getId(),
+                'user_id' => $comentario->getUsuario()->getId(),
+                'post_id' => $comentario->getPost()->getId()
+            ]);
+
             return $comentario;
         } catch (\Throwable $th) {
             $entityManager->getConnection()->rollback();
+            $this->logger->error('[ComentariosService] Erro ao criar comentário', [
+                'user_id' => $comentario->getUsuario()->getId(),
+                'post_id' => $comentario->getPost()->getId(),
+                'exception' => $th
+            ]);
             throw $th;
         }
     }

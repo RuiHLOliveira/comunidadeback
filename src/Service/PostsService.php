@@ -41,13 +41,13 @@ class PostsService
     /**
      * @param User $usuario
      * @param integer $id
-     * @return Post
+     * @return Post|null
      */
-    public function findOne(User $usuario, $id): Post
+    public function findOneBy($id, $criteria): ?Post
     {
-        $criteria['usuario'] = $usuario;
         $criteria['id'] = $id;
-        return $this->doctrine->getRepository(Post::class)->findOneBy($criteria);
+        $data = $this->doctrine->getRepository(Post::class)->findOneBy($criteria);
+        return $data;
     }
 
     /**

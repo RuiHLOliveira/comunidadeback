@@ -5,16 +5,16 @@ namespace App\Entity;
 use JsonSerializable;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\ModuloRepository;
-use App\Entity\JsonSerializableEntity;
+use App\Entity\SerializableEntity;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass=ModuloRepository::class)
  */
-class Modulo extends JsonSerializableEntity
+class Modulo extends SerializableEntity
 {
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = [
             'id' => $this->getId(),

@@ -12,7 +12,7 @@ use JsonSerializable;
 class InvitationToken implements JsonSerializable
 {
     
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = [
             'id' => $this->getId(),

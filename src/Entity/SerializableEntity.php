@@ -7,9 +7,9 @@ use App\Repository\HoraRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 
-abstract class JsonSerializableEntity implements JsonSerializable
+abstract class SerializableEntity implements JsonSerializable
 {
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $createdAt = $this->getCreatedAt() != null ? $this->getCreatedAt()->format('Y-m-d H:i:sO') : null;
         $updatedAt = $this->getUpdatedAt() != null ? $this->getUpdatedAt()->format('Y-m-d H:i:sO') : null;

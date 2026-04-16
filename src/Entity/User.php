@@ -15,9 +15,9 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * @ORM\Entity(repositoryClass=UserRepository::class)
  * @ORM\Table(name="`user`")
  */
-class User extends JsonSerializableEntity implements UserInterface, PasswordAuthenticatedUserInterface
+class User extends SerializableEntity implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = parent::jsonSerialize();
         $array['id'] = $this->getId();

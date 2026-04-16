@@ -18,6 +18,10 @@ when@dev:
             #chromephp:
             #    type: chromephp
             #    level: info
+            sentry:
+                type: service
+                id: Sentry\Monolog\Handler
+                level: debug
             console:
                 type: console
                 process_psr_3_messages: false
@@ -51,6 +55,10 @@ when@prod:
                 path: php://stderr
                 level: debug
                 formatter: monolog.formatter.json
+            sentry:
+                type: service
+                id: Sentry\Monolog\Handler
+                level: error
             console:
                 type: console
                 process_psr_3_messages: false
